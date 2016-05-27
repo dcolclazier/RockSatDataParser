@@ -4,3 +4,4 @@ RockSatParser/App.config
 RockSatParser/RockSatParser.csproj
 RockSatParser/bin/Debug/RockSatParser.exe.config
 RockSatParser/bin/Debug/
+*.stackdump

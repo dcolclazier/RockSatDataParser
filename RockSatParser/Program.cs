@@ -137,7 +137,7 @@ namespace RockSatParser
                 fileTest.WriteByte((byte)30);
 
                 fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x02); //accel
+                fileTest.WriteByte(0x02); //geiger
                 size = 8;
                 size_msb = (byte)(size >> 8);
                 size_lsb = (byte)(size & 255);
@@ -159,7 +159,7 @@ namespace RockSatParser
                 fileTest.WriteByte((byte)30);
 
                 fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x03); //accel
+                fileTest.WriteByte(0x03); //geiger
                 size = 8;
                 size_msb = (byte)(size >> 8);
                 size_lsb = (byte)(size & 255);
