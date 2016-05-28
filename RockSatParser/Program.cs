@@ -30,158 +30,158 @@ namespace RockSatParser
             }
 
 
-            //testing code (didn't have any data files unfort)
-            using (var fileTest = new FileStream("exampledata.dat", FileMode.Create))
-            {
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x01); //bno
-                byte size = 14;
-                var size_msb = (byte)(size >> 8);
-                var size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(1);
-                fileTest.WriteByte(2);
-                fileTest.WriteByte(3);
-                fileTest.WriteByte(4);
-                fileTest.WriteByte(5);
-                fileTest.WriteByte(6);
-                fileTest.WriteByte(43);
-                fileTest.WriteByte(4);
-                fileTest.WriteByte(5);
-                fileTest.WriteByte(6);
-                fileTest.WriteByte(4);
-                fileTest.WriteByte(5);
-                fileTest.WriteByte(6);
-                fileTest.WriteByte(42);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)30);
+            ////testing code (didn't have any data files unfort)
+            //using (var fileTest = new FileStream("exampledata.dat", FileMode.Create))
+            //{
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x01); //bno
+            //    byte size = 14;
+            //    var size_msb = (byte)(size >> 8);
+            //    var size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(1);
+            //    fileTest.WriteByte(2);
+            //    fileTest.WriteByte(3);
+            //    fileTest.WriteByte(4);
+            //    fileTest.WriteByte(5);
+            //    fileTest.WriteByte(6);
+            //    fileTest.WriteByte(43);
+            //    fileTest.WriteByte(4);
+            //    fileTest.WriteByte(5);
+            //    fileTest.WriteByte(6);
+            //    fileTest.WriteByte(4);
+            //    fileTest.WriteByte(5);
+            //    fileTest.WriteByte(6);
+            //    fileTest.WriteByte(42);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)30);
 
 
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x01); //bno
-                size = 14;
-                size_msb = (byte)(size >> 8);
-                size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(11);
-                fileTest.WriteByte(21);
-                fileTest.WriteByte(31);
-                fileTest.WriteByte(41);
-                fileTest.WriteByte(51);
-                fileTest.WriteByte(61);
-                fileTest.WriteByte(43);
-                fileTest.WriteByte(41);
-                fileTest.WriteByte(51);
-                fileTest.WriteByte(61);
-                fileTest.WriteByte(41);
-                fileTest.WriteByte(51);
-                fileTest.WriteByte(61);
-                fileTest.WriteByte(46);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)30);
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x01); //bno
+            //    size = 14;
+            //    size_msb = (byte)(size >> 8);
+            //    size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(11);
+            //    fileTest.WriteByte(21);
+            //    fileTest.WriteByte(31);
+            //    fileTest.WriteByte(41);
+            //    fileTest.WriteByte(51);
+            //    fileTest.WriteByte(61);
+            //    fileTest.WriteByte(43);
+            //    fileTest.WriteByte(41);
+            //    fileTest.WriteByte(51);
+            //    fileTest.WriteByte(61);
+            //    fileTest.WriteByte(41);
+            //    fileTest.WriteByte(51);
+            //    fileTest.WriteByte(61);
+            //    fileTest.WriteByte(46);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)30);
 
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x03); //accel
-                size = 9;
-                size_msb = (byte)(size >> 8);
-                size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)46);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(1);
-                fileTest.WriteByte(2);
-                fileTest.WriteByte(3);
-                fileTest.WriteByte(4);
-                fileTest.WriteByte(5);
-                fileTest.WriteByte(6);
-                fileTest.WriteByte(7);
-                fileTest.WriteByte(8);
-                fileTest.WriteByte(9);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)46);
-                fileTest.WriteByte((byte)30);
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x03); //accel
+            //    size = 9;
+            //    size_msb = (byte)(size >> 8);
+            //    size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)46);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(1);
+            //    fileTest.WriteByte(2);
+            //    fileTest.WriteByte(3);
+            //    fileTest.WriteByte(4);
+            //    fileTest.WriteByte(5);
+            //    fileTest.WriteByte(6);
+            //    fileTest.WriteByte(7);
+            //    fileTest.WriteByte(8);
+            //    fileTest.WriteByte(9);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)46);
+            //    fileTest.WriteByte((byte)30);
 
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x03); //accel
-                size = 9;
-                size_msb = (byte)(size >> 8);
-                size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)47);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(11);
-                fileTest.WriteByte(12);
-                fileTest.WriteByte(13);
-                fileTest.WriteByte(14);
-                fileTest.WriteByte(15);
-                fileTest.WriteByte(16);
-                fileTest.WriteByte(17);
-                fileTest.WriteByte(18);
-                fileTest.WriteByte(19);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)30);
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x03); //accel
+            //    size = 9;
+            //    size_msb = (byte)(size >> 8);
+            //    size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)47);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(11);
+            //    fileTest.WriteByte(12);
+            //    fileTest.WriteByte(13);
+            //    fileTest.WriteByte(14);
+            //    fileTest.WriteByte(15);
+            //    fileTest.WriteByte(16);
+            //    fileTest.WriteByte(17);
+            //    fileTest.WriteByte(18);
+            //    fileTest.WriteByte(19);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)30);
 
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x02); //geiger
-                size = 8;
-                size_msb = (byte)(size >> 8);
-                size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)47);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(1);
-                fileTest.WriteByte(2);
-                fileTest.WriteByte(3);
-                fileTest.WriteByte(4);
-                fileTest.WriteByte(5);
-                fileTest.WriteByte(6);
-                fileTest.WriteByte(7);
-                fileTest.WriteByte(8);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)45);
-                fileTest.WriteByte((byte)30);
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x02); //geiger
+            //    size = 8;
+            //    size_msb = (byte)(size >> 8);
+            //    size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)47);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(1);
+            //    fileTest.WriteByte(2);
+            //    fileTest.WriteByte(3);
+            //    fileTest.WriteByte(4);
+            //    fileTest.WriteByte(5);
+            //    fileTest.WriteByte(6);
+            //    fileTest.WriteByte(7);
+            //    fileTest.WriteByte(8);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)45);
+            //    fileTest.WriteByte((byte)30);
 
-                fileTest.WriteByte(0xFF);
-                fileTest.WriteByte(0x03); //geiger
-                size = 8;
-                size_msb = (byte)(size >> 8);
-                size_lsb = (byte)(size & 255);
-                fileTest.WriteByte(size_msb);
-                fileTest.WriteByte(size_lsb);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)48);
-                fileTest.WriteByte((byte)15);
-                fileTest.WriteByte(11);
-                fileTest.WriteByte(12);
-                fileTest.WriteByte(13);
-                fileTest.WriteByte(14);
-                fileTest.WriteByte(15);
-                fileTest.WriteByte(16);
-                fileTest.WriteByte(17);
-                fileTest.WriteByte(18);
-                fileTest.WriteByte((byte)12);
-                fileTest.WriteByte((byte)48);
-                fileTest.WriteByte((byte)30);
+            //    fileTest.WriteByte(0xFF);
+            //    fileTest.WriteByte(0x03); //geiger
+            //    size = 8;
+            //    size_msb = (byte)(size >> 8);
+            //    size_lsb = (byte)(size & 255);
+            //    fileTest.WriteByte(size_msb);
+            //    fileTest.WriteByte(size_lsb);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)48);
+            //    fileTest.WriteByte((byte)15);
+            //    fileTest.WriteByte(11);
+            //    fileTest.WriteByte(12);
+            //    fileTest.WriteByte(13);
+            //    fileTest.WriteByte(14);
+            //    fileTest.WriteByte(15);
+            //    fileTest.WriteByte(16);
+            //    fileTest.WriteByte(17);
+            //    fileTest.WriteByte(18);
+            //    fileTest.WriteByte((byte)12);
+            //    fileTest.WriteByte((byte)48);
+            //    fileTest.WriteByte((byte)30);
 
 
-            }
+            //}
 
 
             Console.WriteLine("RockSat Data Parser, v0.1");
@@ -195,8 +195,12 @@ namespace RockSatParser
                 while (fileStream.Position != fileStream.Length)
                 {
                     //first packet should be start packet (0xff)
-                    if (fileStream.ReadByte() != 0xFF) Console.WriteLine("Error... expected data packet start, received something else...");
+                    if (fileStream.ReadByte() != 0xFF) {
+                        Console.WriteLine("Error... expected data packet start, received something else...");
+                        while (fileStream.ReadByte() != 0xFF && fileStream.Position != fileStream.Length) ;
+                    }
                     //
+
                     var packetType = fileStream.ReadByte();
 
                     var size_msb = fileStream.ReadByte();
@@ -241,7 +245,7 @@ namespace RockSatParser
 
             switch (packetType)
             {
-                case 0x01: //BNO
+                case 0x02: //BNO
 
                     using (var fileTest = new FileStream("bno.csv", FileMode.Append))
                     {
@@ -253,7 +257,7 @@ namespace RockSatParser
                         }
                     }
                     break;
-                case 0x02: //GEIGER
+                case 0x00: //GEIGER
                     using (var fileTest = new FileStream("geiger.csv", FileMode.Append))
                     {
                         for (int i = 0; i < dataSize; i+=2)
@@ -264,7 +268,7 @@ namespace RockSatParser
                         }
                     }
                     break;
-                case 0x03: //ACCELDUMP
+                case 0x01: //ACCELDUMP
 
                     using (var fileTest = new FileStream("accel.csv", FileMode.Append))
                     {
