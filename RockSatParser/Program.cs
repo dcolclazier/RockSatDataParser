@@ -109,7 +109,7 @@ namespace RockSatParser
                     var endMillisBinary = new[] { data[data.Length - 8], data[data.Length - 7], data[data.Length - 6], data[data.Length - 5], data[data.Length - 4], data[data.Length - 3], data[data.Length - 2], data[data.Length - 1]};
                     var endMillis = BitConverter.ToInt64(endMillisBinary, 0);
                     var delta = Math.Abs(endMillis - startMillis);
-                    double step = dataSize / (float)delta;
+                    double step = (float)dataSize/3 / delta;
                     double currentStep = startMillis;
 
                     Console.Write("Acceleration packet found. Processing...");
