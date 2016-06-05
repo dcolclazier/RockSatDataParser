@@ -32,7 +32,7 @@ namespace RockSatParser
             }
             using (var temptimeSync = new FileStream("timeSync.csv", FileMode.Create))
             {
-                var header = Encoding.UTF8.GetBytes("time(millis),gyro_x,gyro_y,gyro_z,accel_x,accel_y,accel_z,temp\n");
+                var header = Encoding.UTF8.GetBytes("time(RTC),time(ms)\n");
                 temptimeSync.Write(header, 0, header.Length);
             }
 
@@ -68,7 +68,7 @@ namespace RockSatParser
                         dataContainer[i] = (byte)fileStream.ReadByte();
                     }
 
-                    parseData(packetType, dataSize, dataContainer);
+                    ParseData(packetType, dataSize, dataContainer);
                 }
             }
 
@@ -76,8 +76,9 @@ namespace RockSatParser
             Console.ReadKey();
         }
 
-        private static void parseData(int packetType,int dataSize, byte[] data)
+        private static void ParseData(int packetType,int accelDataSizeWithTimeStamps, byte[] data)
         {
+
             var startMillisBinary = new[] {data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7] };
             var startMillis = BitConverter.ToInt64(startMillisBinary,0);
 
@@ -98,6 +99,7 @@ namespace RockSatParser
                     Console.Write("Geiger packet found. Processing...");
                     using (var logFile = new FileStream("geiger.csv", FileMode.Append))
                     {
+                        //bug - two bytes for each geiger count... is that necessary?
                         var currentline = startMillis + "," + data[startIndex] + "," + data[startIndex + 1] + "\n";
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                         
@@ -106,23 +108,27 @@ namespace RockSatParser
                     break;
                 case 0x01: //ACCELDUMP
 
-                    var endMillisBinary = new[] { data[data.Length - 8], data[data.Length - 7], data[data.Length - 6], data[data.Length - 5], data[data.Length - 4], data[data.Length - 3], data[data.Length - 2], data[data.Length - 1]};
+                   var endMillisBinary = new[] { data[data.Length - 8], data[data.Length - 7], data[data.Length - 6], data[data.Length - 5], data[data.Length - 4], data[data.Length - 3], data[data.Length - 2], data[data.Length - 1]};
                     var endMillis = BitConverter.ToInt64(endMillisBinary, 0);
                     var delta = Math.Abs(endMillis - startMillis);
-                    double step = (float)dataSize/3 / delta;
+
+                    var timeStampSizeCount = 16;
+                    var actualSizeofAccelData = accelDataSizeWithTimeStamps - timeStampSizeCount;
+
+                    double step = delta / ((float)actualSizeofAccelData/3); //bug datasize is wrong value - fixed?
                     double currentStep = startMillis;
 
                     Console.Write("Acceleration packet found. Processing...");
                     using (var logFile = new FileStream("accel.csv", FileMode.Append))
                     {
-                        for (var i = startIndex; i < dataSize - startIndex; i += 6) //startIndex = size of time data, there's time data at the end, and datasize includes size of both timestamps
+                        for (var i = startIndex; i < accelDataSizeWithTimeStamps - startIndex; i += 6) //startIndex = size of time data, there's time data at the end, and datasize includes size of both timestamps
                         {
                             var currentX = (data[i] << 8) + data[i+1];
                             var currentY = (data[i+2] << 8) + data[i+3];
                             var currentZ = (data[i+4] << 8) + data[i+5];
                             var currentline = currentStep + "," + currentX + "," + currentY + "," + currentZ + "\n";
                             logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
-                            currentStep += step;
+                            currentStep += step; // bug - happening 3x too often - fixed?
                         }
                     }
                     Console.WriteLine(" finished.");
@@ -137,11 +143,11 @@ namespace RockSatParser
 
                         var millis = new[] {data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10]};
 
-                        var e_hours = data[11];
-                        var e_mins = data[12];
-                        var e_sec = data[13];
+                        //var e_hours = data[11];
+                        //var e_mins = data[12];
+                        //var e_sec = data[13];
 
-                        var currentline = hours + ":" + minutes + ":" + seconds + "," + BitConverter.ToInt64(millis,0) + "," + e_hours + ":" + e_mins + ":" + e_sec;
+                        var currentline = hours + ":" + minutes + ":" + seconds + "," + BitConverter.ToInt64(millis,0);
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
