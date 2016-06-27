@@ -185,7 +185,7 @@ namespace RockSatParser
                     var timeStampSizeCount = 6;
                     var actualSizeofAccelData = dataSizewithTimeStamps - timeStampSizeCount;
 
-                    double step = delta / ((float)actualSizeofAccelData/3);
+                    double step = delta / ((float)actualSizeofAccelData/6);
                     double currentStep = startMillis;
 
                     Console.Write("Acceleration packet found. Processing...");
