@@ -29,30 +29,40 @@ namespace RockSatParser
         static void Main(string[] args)
         {
             //set up files with headers
-            using (var tempCMag = new FileStream("cmag.csv", FileMode.Create))
+            using (var tempGeiger = new FileStream("fastmag.csv", FileMode.Create))
             {
-                var header = Encoding.UTF8.GetBytes("time(millis),AnalogRead\n");
-                tempCMag.Write(header,0,header.Length);
+                var header = Encoding.UTF8.GetBytes("time(millis),shielded, unshielded\n");
+                tempGeiger.Write(header,0,header.Length);
             }
-            using (var tempEMag = new FileStream("emag.csv", FileMode.Create))
+            using (var tempGeiger = new FileStream("emag.csv", FileMode.Create))
             {
-                var header = Encoding.UTF8.GetBytes("time(millis),Mx, My, Mz, T\n");
-                tempEMag.Write(header,0,header.Length);
+                var header = Encoding.UTF8.GetBytes("time(millis),shielded, unshielded\n");
+                tempGeiger.Write(header,0,header.Length);
             }
             using (var tempDebug = new FileStream("debug.csv", FileMode.Create))
             {
                 var header = Encoding.UTF8.GetBytes("time(millis),message\n");
                 tempDebug.Write(header,0,header.Length);
             }
-            using (var tempBmp = new FileStream("bmp.csv", FileMode.Create))
+            using (var tempAccel = new FileStream("accel.csv", FileMode.Create))
             {
-                var header = Encoding.UTF8.GetBytes("time(millis),pressure,temp,alt\n");
-                tempBmp.Write(header,0,header.Length);
+                var header = Encoding.UTF8.GetBytes("time(millis),x,y,z\n");
+                tempAccel.Write(header,0,header.Length);
+            }
+            using (var tempBno = new FileStream("bmp.csv", FileMode.Create))
+            {
+                var header = Encoding.UTF8.GetBytes("time(millis),gyro_x,gyro_y,gyro_z,accel_x,accel_y,accel_z,temp\n");
+                tempBno.Write(header, 0, header.Length);
             }
             using (var tempBno = new FileStream("bno.csv", FileMode.Create))
             {
-                var header = Encoding.UTF8.GetBytes("time(millis),accX,accY,accZ,gravX,gravY,gravZ,linAccX,linAccY,linAccZ,gyroX,gyroY,gyroZ,magX,magY,magZ,eulerX,eulerY,eulerZ,sysCalib,gyrCalib,accCalib,magCalib\n");
+                var header = Encoding.UTF8.GetBytes("time(millis),gyro_x,gyro_y,gyro_z,accel_x,accel_y,accel_z,temp\n");
                 tempBno.Write(header, 0, header.Length);
+            }
+            using (var temptimeSync = new FileStream("timeSync.csv", FileMode.Create))
+            {
+                var header = Encoding.UTF8.GetBytes("time(RTC),time(ms)\n");
+                temptimeSync.Write(header, 0, header.Length);
             }
 
             Console.WriteLine("RockSat Data Parser, v.9");
@@ -80,10 +90,10 @@ namespace RockSatParser
                     switch (packetType)
                     {
                         case 0x00:
-                            dataSize = custMagSize;
+                            dataSize = bmpSize;
                             break;
                         case 0x01:
-                            dataSize = bmpSize;
+                            dataSize = custMagSize;
                             break;
                         case 0x02:
                             dataSize = bnoSize;
@@ -137,7 +147,7 @@ namespace RockSatParser
             switch (packetType) {
                 case 0x02: //BNO
                     var current = startIndex;
-                    Console.Write("BNO packet found. Size: + " + data.Length + ". Processing...");
+                    Console.Write("BNO packet found. Processing...");
                     using (var logFile = new FileStream("bno.csv", FileMode.Append))
                     {
                         //0 time 1 time 2 time 3 data
@@ -181,28 +191,21 @@ namespace RockSatParser
                             var EuleryNeg = data[current++] == 1 ? -1 : 1;
                             var EulervecY = (data[current++] << 8) + data[current++] * EuleryNeg;
                             var EulerzNeg = data[current++] == 1 ? -1 : 1;
-                            var EulervecZ = (data[current++] << 8) + data[current++] * EulerzNeg;
+                            var EulervecZ = (data[current++] << 8) + data[current] * EulerzNeg;
 
-                        var sysCalib = data[current++];
-                        var gyrCalib = data[current++];
-                        var accCalib = data[current++];
-                        var magCalib = data[current];
-
-                        var currentline = startMillis + "," + AccelvecX/100f + "," + AccelvecY/100f + "," +
-                                          AccelvecZ/100f + "\n"
-                                          + "," + GravvecX/100f + "," + GravvecY/100f + "," + GravvecZ/100f
-                                          + "," + LinearvecX/100f + "," + LinearvecY/100f + "," + LinearvecZ/100f
-                                          + "," + GyrovecX/100f + "," + GyrovecY/100f + "," + GyrovecZ/100f
-                                          + "," + MagvecX/100f + "," + MagvecY/100f + "," + MagvecZ/100f
-                                          + "," + EulervecX/100f + "," + EulervecY/100f + "," + EulervecZ/100f
-                                          + "," + sysCalib + "," + gyrCalib + "," + accCalib + "," + magCalib + "\n";  
+                        var currentline = startMillis + "," + AccelvecX/100f + "," + AccelvecY/100f + "," + AccelvecZ/100f + "\n"
+                            + "," + GravvecX / 100f + "," + GravvecY / 100f + "," + GravvecZ / 100f
+                            + "," + LinearvecX / 100f + "," + LinearvecY / 100f + "," + LinearvecZ / 100f
+                            + "," + GyrovecX / 100f + "," + GyrovecY / 100f + "," + GyrovecZ / 100f
+                            + "," + MagvecX / 100f + "," + MagvecY / 100f + "," + MagvecZ / 100f
+                            + "," + EulervecX / 100f + "," + EulervecY / 100f + "," + EulervecZ / 100f + "\n";
 
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
                 case 0x00: //Custom Mag Dump
-                    Console.Write("Custom Mag packet found. Size: " + data.Length + ". Processing...");
+                    Console.Write("Custom Mag packet found. Processing...");
                     var magRawEndTime = new byte[] { data[data.Length - 3], data[data.Length - 2], data[data.Length - 1], 0, 0, 0, 0, 0 };
                     var magEndTime = BitConverter.ToInt64(magRawEndTime, 0);
                     var magDelta = Math.Abs(magEndTime - startMillis);
@@ -211,34 +214,52 @@ namespace RockSatParser
                     var magDataSize = dataSizewithTimeStamps - magTimeStampSize;
                     double magStep = magDelta / ((float)magDataSize / 2); // 2bytes each vector, 1 vectors
                     double currentMagStep = startMillis;
-                    using (var logFile = new FileStream("cmag.csv", FileMode.Append)) {
-                        for (var i = startIndex; i < dataSizewithTimeStamps - startIndex; i+=2) {
-                            var magVec = ((data[i] << 8) + data[i+1]);
-                            var currentline = currentMagStep + "," + magVec + "\n"; //currentMagStep holds time
+                    using (var logFile = new FileStream("geiger.csv", FileMode.Append))
+                    {
+                        for (int i = startIndex; i < dataSizewithTimeStamps - startIndex; i+=2)
+                        {
+
+                            var magVec = ((data[i] << 8) + data[i+1]) * EulerxNeg;
+                            var currentline = currentMagStep + "," + data[i] + "," + data[i+1] + "\n"; //currentMagStep holds time
                             logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                             currentMagStep += magStep;
                         }
+
+                        //var currentline = startMillis + "," + data[3] + "," + data[4] + "\n";
+                        
+                        
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x01: //BMP Dump
-                    Console.Write("BMP Packet found... Size: " + data.Length + ". Processing...");
-                    using (var logFile = new FileStream("bmp.csv", FileMode.Append)) {
-                        var pressure = new byte[8];
-                        current = startIndex;
-                        for (int i = 0; i < pressure.Length; i++) {
-                            pressure[i] = data[current++];
+                case 0x01: //ACCELDUMP
+
+                    var accelEndTime = new byte[] {data[data.Length - 3], data[data.Length - 2], data[data.Length - 1], 0,0,0,0,0};
+                    var endMillis = BitConverter.ToInt64(accelEndTime, 0);
+                    var delta = Math.Abs(endMillis - startMillis);
+
+                    var timeStampSizeCount = 6;
+                    var actualSizeofAccelData = dataSizewithTimeStamps - timeStampSizeCount;
+
+                    double step = delta / ((float)actualSizeofAccelData/6);
+                    double currentStep = startMillis;
+
+                    Console.Write("Acceleration packet found. Processing...");
+                    using (var logFile = new FileStream("accel.csv", FileMode.Append))
+                    {
+                        for (var i = startIndex; i < dataSizewithTimeStamps - startIndex; i += 6) //startIndex = size of time data, there's time data at the end, and datasize includes size of both timestamps
+                        {
+
+                            var rawX = (data[i] << 8) + data[i+1];
+                            var rawY = (data[i+2] << 8) + data[i+3];
+                            var rawZ = (data[i+4] << 8) + data[i+5];
+                            var currentX = map(rawX/1000f, 0, 1, -200, 200);
+                            var currentY = map(rawY/1000f, 0, 1, -200, 200);
+                            var currentZ = map(rawZ/1000f, 0, 1, -200, 200);
+
+                            var currentline = currentStep + "," + currentX + "," + currentY + "," + currentZ + "\n";
+                            logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
+                            currentStep += step; // bug - happening 3x too often - fixed?
                         }
-                        var actualPressure = BitConverter.ToDouble(pressure, 0);
-
-
-                        var tempNeg = data[current++] == 1 ? -1 : 1;
-                        var bmpTemp = ((data[current++] << 8) + data[current++])*tempNeg;
-                        var altitude = ((data[current++] << 8) + data[current]);
-
-                        var currentLine = startMillis + "," + actualPressure + "," + bmpTemp + "," + altitude + "\n";
-                        logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
-
                     }
                     Console.WriteLine(" finished.");
                     break;
@@ -274,23 +295,18 @@ namespace RockSatParser
                     Console.WriteLine(" finished.");
                     break;
                 case 0x05: // Debug
-                    Console.Write("Expensive Mag Packet found. Processing...");
-                    using (var logFile = new FileStream("emag.csv", FileMode.Append)) {
-                        var size = dataSizewithTimeStamps - 3; //should be 16!
+                    Console.Write("Debug message found. Processing...");
+                    using (var logFile = new FileStream("debug.csv", FileMode.Append))
+                    {
+                        var size = dataSizewithTimeStamps - 3;
+                        var millis = new byte[] {data[0], data[1], data[2],0,0,0,0,0};
+                        var message = new byte[size];
+                        for (int i = 0; i < size; i++) {
+                            message[i] = data[i + 3];
+                        }
 
-                        var dataStream = new byte[size];
-                        //data[0] = echo... data[1] = SOT
-                        //data[2] <<8 + data[3] = MX
-                        var mX = ((short)((data[3] << 8) + data[4])) / 1000.0;
-                        var mY = ((short)((data[5] << 8) + data[6])) / 1000.0;
-                        var mZ = ((short)((data[7] << 8) + data[8])) / 1000.0;
-
-                        var temp = ((short)((data[9] << 8) + data[10])) / 100.0;
-
-                        //data 10-11 ANA1, 12 status, 13 checksum, 14-15 EOT
-
-                        var currentLine = startMillis + "," + mX + "," + mY + "," + mZ + "," + temp + "\n";
-                        logFile.Write(Encoding.UTF8.GetBytes(currentLine),0,currentLine.Length);
+                        var currentline =BitConverter.ToInt64(millis,0) +"," + Encoding.UTF8.GetString(message) + "\n";
+                        logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
