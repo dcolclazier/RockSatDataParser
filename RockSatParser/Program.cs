@@ -10,23 +10,40 @@ using System.Threading.Tasks;
 
 namespace RockSatParser
 {
+    enum PacketType {
+        CustomMagnetometer = 0x00,
+        BMPSensorUpdate = 0x01,
+        BNOSensorUpdate = 0x02,
+        TimeUpdate = 0x03,
+        DebugMessage = 0x04,
+        ExpensiveMagUpdate = 0x05,
+        BatteryUpdate = 0x06,
+        HeaterUpdate = 0x07,
+        LuminosityUpdate = 0x08
+    }
+
+
     class Program
     {
         
         
 
 
-        public static float map(float original, float fromLo, float fromHi, float toLow, float toHigh)
+        public static float Map(float original, float fromLo, float fromHi, float toLow, float toHigh)
         {
             return (original - fromLo)*((toHigh - toLow)/(fromHi - fromLo)) + toLow;
         }
-        //data + time?
-        private static int bmpSize = 16; //yep
-        private static int timeSyncSize = 11; //unused for demosat
-        private static int custMagSize = 18438; //yep
-        private static int bnoSize = 61; //yep
-        private static int eMagSize = 19; //yep
-        static void Main(string[] args)
+        //data + time
+        private static int _bmpSize = 16; //yep
+        private static int _timeSyncSize = 11; //unused for demosat
+        private static int _custMagSize = 18438; //yep
+        private static int _bnoSize = 61; //yep
+        private static int _eMagSize = 19; //yep
+        private static int _batteryUpdateSize = 13;
+        private static int _luminosityUpdateSize = 7;
+        private static int _heaterUpdateSize = 7;
+
+        private static void Main(string[] args)
         {
             //set up files with headers
             using (var tempCMag = new FileStream("cmag.csv", FileMode.Create))
@@ -54,6 +71,21 @@ namespace RockSatParser
                 var header = Encoding.UTF8.GetBytes("time(millis),accX,accY,accZ,gravX,gravY,gravZ,linAccX,linAccY,linAccZ,gyroX,gyroY,gyroZ,magX,magY,magZ,eulerX,eulerY,eulerZ,sysCalib,gyrCalib,accCalib,magCalib\n");
                 tempBno.Write(header, 0, header.Length);
             }
+            using (var tempBno = new FileStream("heater.csv", FileMode.Create))
+            {
+                var header = Encoding.UTF8.GetBytes("time(millis),temp,heaterTemp\n");
+                tempBno.Write(header, 0, header.Length);
+            }
+            using (var tempBno = new FileStream("luminosity.csv", FileMode.Create))
+            {
+                var header = Encoding.UTF8.GetBytes("time(millis),luminosity\n");
+                tempBno.Write(header, 0, header.Length);
+            }
+            using (var tempBno = new FileStream("battery.csv", FileMode.Create))
+            {
+                var header = Encoding.UTF8.GetBytes("time(millis),voltage,percent\n");
+                tempBno.Write(header, 0, header.Length);
+            }
 
             Console.WriteLine("RockSat Data Parser, v.9");
             Console.WriteLine("Make sure data file is in same directory as this utility.");
@@ -76,144 +108,164 @@ namespace RockSatParser
 
                     //second byte is packet type
                     var packetType = fileStream.ReadByte();
+                    var packetT = (PacketType) packetType;
+
                     var dataSize = 0;
-                    switch (packetType)
-                    {
-                        case 0x00:
-                            dataSize = custMagSize;
+                    switch (packetT) {
+                        case PacketType.CustomMagnetometer:
+                            dataSize = _custMagSize;
                             break;
-                        case 0x01:
-                            dataSize = bmpSize;
+                        case PacketType.BMPSensorUpdate:
+                            dataSize = _bmpSize;
                             break;
-                        case 0x02:
-                            dataSize = bnoSize;
+                        case PacketType.BNOSensorUpdate:
+                            dataSize = _bnoSize;
                             break;
-                        case 0x03:
-                            dataSize = timeSyncSize;
+                        case PacketType.TimeUpdate:
+                            dataSize = _timeSyncSize;
                             break;
-                        case 0x04:
+                        case PacketType.DebugMessage:
                             var sizeMsb = fileStream.ReadByte();
                             var sizeLsb = fileStream.ReadByte();
                             dataSize = (sizeMsb << 8) + sizeLsb;
                             break;
-                        case 0x05:
-                            dataSize = eMagSize;
+                        case PacketType.ExpensiveMagUpdate:
+                            dataSize = _eMagSize;
                             break;
+                        case PacketType.BatteryUpdate:
+                            dataSize = _batteryUpdateSize;
+                            break;
+                        case PacketType.HeaterUpdate:
+                            dataSize = _heaterUpdateSize;
+                            break;
+                        case PacketType.LuminosityUpdate:
+                            dataSize = _luminosityUpdateSize;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
+
+                    //switch (packetType) {
+                    //    case 0x00:
+                    //        dataSize = _custMagSize;
+                    //        break;
+                    //    case 0x01:
+                    //        dataSize = _bmpSize;
+                    //        break;
+                    //    case 0x02:
+                    //        dataSize = _bnoSize;
+                    //        break;
+                    //    case 0x03:
+                    //        dataSize = _timeSyncSize;
+                    //        break;
+                    //    case 0x04:
+                    //        var sizeMsb = fileStream.ReadByte();
+                    //        var sizeLsb = fileStream.ReadByte();
+                    //        dataSize = (sizeMsb << 8) + sizeLsb;
+                    //        break;
+                    //    case 0x05:
+                    //        dataSize = _eMagSize;
+                    //        break;
+                    //}
                     //3rd and 4th are size
                     //var sizeMsb = fileStream.ReadByte();
                     //var sizeLsb = fileStream.ReadByte();
                     //var dataSize = (sizeMsb << 8) + sizeLsb;
 
+                    var dataContainer = new byte[dataSize];
 
-
-                    var dataContainer = new byte[dataSize]; 
-
-                    for (var i = 0; i < dataSize; i++)
-                    {
-                        dataContainer[i] = (byte)fileStream.ReadByte();
+                    for (var i = 0; i < dataSize; i++) {
+                        dataContainer[i] = (byte) fileStream.ReadByte();
                     }
 
-                    ParseData(packetType, dataSize, dataContainer);
+                    ParseData(packetT, dataSize, dataContainer);
                 }
-                
             }
 
             Console.WriteLine("Finished! ");
             Console.ReadKey();
         }
 
-        private static void ParseData(int packetType,int dataSizewithTimeStamps, byte[] data)
-        {
-
+        private static void ParseData(PacketType packetType, int dataSizewithTimeStamps, byte[] data) {
             //var startMillisBinary = new[] {data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7] };
             //var startMillis = BitConverter.ToInt64(startMillisBinary,0);
 
-
-            var newStartMillisBinary = new byte[] { data[0], data[1], data[2], 0, 0, 0, 0, 0 };
+            var newStartMillisBinary = new byte[] {data[0], data[1], data[2], 0, 0, 0, 0, 0};
             var startMillis = BitConverter.ToInt64(newStartMillisBinary, 0);
 
             var startIndex = 3; //3 is where data starts... 0,1,2 have time data.
             switch (packetType) {
-                case 0x02: //BNO
+                case PacketType.BNOSensorUpdate: //BNO
                     var current = startIndex;
                     Console.Write("BNO packet found. Size: + " + data.Length + ". Processing...");
-                    using (var logFile = new FileStream("bno.csv", FileMode.Append))
-                    {
+                    using (var logFile = new FileStream("bno.csv", FileMode.Append)) {
                         //0 time 1 time 2 time 3 data
-                            var AccelxNeg = data[current++] == 1 ? -1 : 1;
-                            var AccelvecX = ((data[current++] << 8) + data[current++])* AccelxNeg;
-                            var AccelyNeg = data[current++] == 1 ? -1 : 1;
-                            var AccelvecY = (data[current++] << 8) + data[current++] * AccelyNeg;
-                            var AccelzNeg = data[current++] == 1 ? -1 : 1;
-                            var AccelvecZ = (data[current++] << 8) + data[current++] * AccelzNeg;
+                        var accelxNeg = data[current++] == 1 ? -1 : 1;
+                        var accelvecX = ((data[current++] << 8) + data[current++])*accelxNeg;
+                        var accelyNeg = data[current++] == 1 ? -1 : 1;
+                        var accelvecY = (data[current++] << 8) + data[current++]*accelyNeg;
+                        var accelzNeg = data[current++] == 1 ? -1 : 1;
+                        var accelvecZ = (data[current++] << 8) + data[current++]*accelzNeg;
                         //0 time 1 time 2 time 3 data
-                            var GravxNeg = data[current++] == 1 ? -1 : 1;
-                            var GravvecX = ((data[current++] << 8) + data[current++])* GravxNeg;
-                            var GravyNeg = data[current++] == 1 ? -1 : 1;
-                            var GravvecY = (data[current++] << 8) + data[current++] * GravyNeg;
-                            var GravzNeg = data[current++] == 1 ? -1 : 1;
-                            var GravvecZ = (data[current++] << 8) + data[current++] * GravzNeg;
+                        var gravxNeg = data[current++] == 1 ? -1 : 1;
+                        var gravvecX = ((data[current++] << 8) + data[current++])*gravxNeg;
+                        var gravyNeg = data[current++] == 1 ? -1 : 1;
+                        var gravvecY = (data[current++] << 8) + data[current++]*gravyNeg;
+                        var gravzNeg = data[current++] == 1 ? -1 : 1;
+                        var gravvecZ = (data[current++] << 8) + data[current++]*gravzNeg;
                         //0 time 1 time 2 time 3 data
-                            var LinearxNeg = data[current++] == 1 ? -1 : 1;
-                            var LinearvecX = ((data[current++] << 8) + data[current++])* LinearxNeg;
-                            var LinearyNeg = data[current++] == 1 ? -1 : 1;
-                            var LinearvecY = (data[current++] << 8) + data[current++] * LinearyNeg;
-                            var LinearzNeg = data[current++] == 1 ? -1 : 1;
-                            var LinearvecZ = (data[current++] << 8) + data[current++] * LinearzNeg;
+                        var linearxNeg = data[current++] == 1 ? -1 : 1;
+                        var linearvecX = ((data[current++] << 8) + data[current++])*linearxNeg;
+                        var linearyNeg = data[current++] == 1 ? -1 : 1;
+                        var linearvecY = (data[current++] << 8) + data[current++]*linearyNeg;
+                        var linearzNeg = data[current++] == 1 ? -1 : 1;
+                        var linearvecZ = (data[current++] << 8) + data[current++]*linearzNeg;
                         //0 time 1 time 2 time 3 data
-                            var GyroxNeg = data[current++] == 1 ? -1 : 1;
-                            var GyrovecX = ((data[current++] << 8) + data[current++])* GyroxNeg;
-                            var GyroyNeg = data[current++] == 1 ? -1 : 1;
-                            var GyrovecY = (data[current++] << 8) + data[current++] * GyroyNeg;
-                            var GyrozNeg = data[current++] == 1 ? -1 : 1;
-                            var GyrovecZ = (data[current++] << 8) + data[current++] * GyrozNeg;
+                        var gyroxNeg = data[current++] == 1 ? -1 : 1;
+                        var gyrovecX = ((data[current++] << 8) + data[current++])*gyroxNeg;
+                        var gyroyNeg = data[current++] == 1 ? -1 : 1;
+                        var gyrovecY = (data[current++] << 8) + data[current++]*gyroyNeg;
+                        var gyrozNeg = data[current++] == 1 ? -1 : 1;
+                        var gyrovecZ = (data[current++] << 8) + data[current++]*gyrozNeg;
                         //0 time 1 time 2 time 3 data
-                            var MagxNeg = data[current++] == 1 ? -1 : 1;
-                            var MagvecX = ((data[current++] << 8) + data[current++])* MagxNeg;
-                            var MagyNeg = data[current++] == 1 ? -1 : 1;
-                            var MagvecY = (data[current++] << 8) + data[current++] * MagyNeg;
-                            var MagzNeg = data[current++] == 1 ? -1 : 1;
-                            var MagvecZ = (data[current++] << 8) + data[current++] * MagzNeg;
+                        var magxNeg = data[current++] == 1 ? -1 : 1;
+                        var magvecX = ((data[current++] << 8) + data[current++])*magxNeg;
+                        var magyNeg = data[current++] == 1 ? -1 : 1;
+                        var magvecY = (data[current++] << 8) + data[current++]*magyNeg;
+                        var magzNeg = data[current++] == 1 ? -1 : 1;
+                        var magvecZ = (data[current++] << 8) + data[current++]*magzNeg;
                         //0 time 1 time 2 time 3 data
-                            var EulerxNeg = data[current++] == 1 ? -1 : 1;
-                            var EulervecX = ((data[current++] << 8) + data[current++])* EulerxNeg;
-                            var EuleryNeg = data[current++] == 1 ? -1 : 1;
-                            var EulervecY = (data[current++] << 8) + data[current++] * EuleryNeg;
-                            var EulerzNeg = data[current++] == 1 ? -1 : 1;
-                            var EulervecZ = (data[current++] << 8) + data[current++] * EulerzNeg;
+                        var eulerxNeg = data[current++] == 1 ? -1 : 1;
+                        var eulervecX = ((data[current++] << 8) + data[current++])*eulerxNeg;
+                        var euleryNeg = data[current++] == 1 ? -1 : 1;
+                        var eulervecY = (data[current++] << 8) + data[current++]*euleryNeg;
+                        var eulerzNeg = data[current++] == 1 ? -1 : 1;
+                        var eulervecZ = (data[current++] << 8) + data[current++]*eulerzNeg;
 
                         var sysCalib = data[current++];
                         var gyrCalib = data[current++];
                         var accCalib = data[current++];
                         var magCalib = data[current];
 
-                        var currentline = startMillis + "," + AccelvecX/100f + "," + AccelvecY/100f + "," +
-                                          AccelvecZ/100f + "\n"
-                                          + "," + GravvecX/100f + "," + GravvecY/100f + "," + GravvecZ/100f
-                                          + "," + LinearvecX/100f + "," + LinearvecY/100f + "," + LinearvecZ/100f
-                                          + "," + GyrovecX/100f + "," + GyrovecY/100f + "," + GyrovecZ/100f
-                                          + "," + MagvecX/100f + "," + MagvecY/100f + "," + MagvecZ/100f
-                                          + "," + EulervecX/100f + "," + EulervecY/100f + "," + EulervecZ/100f
-                                          + "," + sysCalib + "," + gyrCalib + "," + accCalib + "," + magCalib + "\n";  
+                        var currentline = startMillis + "," + accelvecX/100f + "," + accelvecY/100f + "," + accelvecZ/100f  + "," + gravvecX/100f + "," + gravvecY/100f + "," + gravvecZ/100f + "," + linearvecX/100f + "," + linearvecY/100f + "," + linearvecZ/100f + "," + gyrovecX/100f + "," + gyrovecY/100f + "," + gyrovecZ/100f + "," + magvecX/100f + "," + magvecY/100f + "," + magvecZ/100f + "," + eulervecX/100f + "," + eulervecY/100f + "," + eulervecZ/100f + "," + sysCalib + "," + gyrCalib + "," + accCalib + "," + magCalib + "\n";
 
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x00: //Custom Mag Dump
+                case PacketType.CustomMagnetometer: //Custom Mag Dump
                     Console.Write("Custom Mag packet found. Size: " + data.Length + ". Processing...");
-                    var magRawEndTime = new byte[] { data[data.Length - 3], data[data.Length - 2], data[data.Length - 1], 0, 0, 0, 0, 0 };
+                    var magRawEndTime = new byte[] {data[data.Length - 3], data[data.Length - 2], data[data.Length - 1], 0, 0, 0, 0, 0};
                     var magEndTime = BitConverter.ToInt64(magRawEndTime, 0);
                     var magDelta = Math.Abs(magEndTime - startMillis);
 
                     var magTimeStampSize = 6;
                     var magDataSize = dataSizewithTimeStamps - magTimeStampSize;
-                    double magStep = magDelta / ((float)magDataSize / 2); // 2bytes each vector, 1 vectors
+                    double magStep = magDelta/((float) magDataSize/2); // 2bytes each vector, 1 vectors
                     double currentMagStep = startMillis;
                     using (var logFile = new FileStream("cmag.csv", FileMode.Append)) {
-                        for (var i = startIndex; i < dataSizewithTimeStamps - startIndex; i+=2) {
-                            var magVec = ((data[i] << 8) + data[i+1]);
+                        for (var i = startIndex; i < dataSizewithTimeStamps - startIndex; i += 2) {
+                            var magVec = ((data[i] << 8) + data[i + 1]);
                             var currentline = currentMagStep + "," + magVec + "\n"; //currentMagStep holds time
                             logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                             currentMagStep += magStep;
@@ -221,7 +273,7 @@ namespace RockSatParser
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x01: //BMP Dump
+                case PacketType.BMPSensorUpdate: //BMP Dump
                     Console.Write("BMP Packet found... Size: " + data.Length + ". Processing...");
                     using (var logFile = new FileStream("bmp.csv", FileMode.Append)) {
                         var pressure = new byte[8];
@@ -231,72 +283,118 @@ namespace RockSatParser
                         }
                         var actualPressure = BitConverter.ToDouble(pressure, 0);
 
-
                         var tempNeg = data[current++] == 1 ? -1 : 1;
                         var bmpTemp = ((data[current++] << 8) + data[current++])*tempNeg;
                         var altitude = ((data[current++] << 8) + data[current]);
 
                         var currentLine = startMillis + "," + actualPressure + "," + bmpTemp + "," + altitude + "\n";
                         logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
-
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x03: // Time-sync
+                case PacketType.TimeUpdate: // Time-sync
                     Console.Write("Time-sync packet found. Processing...");
-                    using (var logFile = new FileStream("timeSync.csv", FileMode.Append))
-                    {
+                    using (var logFile = new FileStream("timeSync.csv", FileMode.Append)) {
                         var hours = data[0];
                         var minutes = data[1];
                         var seconds = data[2];
 
-                        var millis = new byte[] {data[3], data[4], data[5],0,0,0,0,0};
+                        var millis = new byte[] {data[3], data[4], data[5], 0, 0, 0, 0, 0};
 
-                        var currentline = hours + ":" + minutes + ":" + seconds + "," + BitConverter.ToInt64(millis,0) + "\n";
+                        var currentline = hours + ":" + minutes + ":" + seconds + "," + BitConverter.ToInt64(millis, 0) + "\n";
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x04: // Debug
+                case PacketType.DebugMessage: // Debug
                     Console.Write("Debug message found. Processing...");
-                    using (var logFile = new FileStream("debug.csv", FileMode.Append))
-                    {
+                    using (var logFile = new FileStream("debug.csv", FileMode.Append)) {
                         var size = dataSizewithTimeStamps - 3;
-                        var millis = new byte[] {data[0], data[1], data[2],0,0,0,0,0};
+                        var millis = new byte[] {data[0], data[1], data[2], 0, 0, 0, 0, 0};
                         var message = new byte[size];
                         for (int i = 0; i < size; i++) {
                             message[i] = data[i + 3];
                         }
 
-                        var currentline =BitConverter.ToInt64(millis,0) +"," + Encoding.UTF8.GetString(message) + "\n";
+                        var currentline = BitConverter.ToInt64(millis, 0) + "," + Encoding.UTF8.GetString(message) + "\n";
                         logFile.Write(Encoding.UTF8.GetBytes(currentline), 0, currentline.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
-                case 0x05: // Debug
+                case PacketType.ExpensiveMagUpdate: // Debug
                     Console.Write("Expensive Mag Packet found. Processing...");
                     using (var logFile = new FileStream("emag.csv", FileMode.Append)) {
                         var size = dataSizewithTimeStamps - 3; //should be 16!
 
-                        var dataStream = new byte[size];
                         //data[0] = echo... data[1] = SOT
                         //data[2] <<8 + data[3] = MX
-                        var mX = ((short)((data[3] << 8) + data[4])) / 1000.0;
-                        var mY = ((short)((data[5] << 8) + data[6])) / 1000.0;
-                        var mZ = ((short)((data[7] << 8) + data[8])) / 1000.0;
+                        var mX = ((short) ((data[3] << 8) + data[4]))/1000.0;
+                        var mY = ((short) ((data[5] << 8) + data[6]))/1000.0;
+                        var mZ = ((short) ((data[7] << 8) + data[8]))/1000.0;
 
-                        var temp = ((short)((data[9] << 8) + data[10])) / 100.0;
+                        var temp = ((short) ((data[9] << 8) + data[10]))/100.0;
 
                         //data 10-11 ANA1, 12 status, 13 checksum, 14-15 EOT
 
                         var currentLine = startMillis + "," + mX + "," + mY + "," + mZ + "," + temp + "\n";
-                        logFile.Write(Encoding.UTF8.GetBytes(currentLine),0,currentLine.Length);
+                        logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
                     }
                     Console.WriteLine(" finished.");
                     break;
+                case PacketType.BatteryUpdate:
+                    Console.Write("Battery Packet found... Size: " + data.Length + ". Processing...");
+                    using (var logFile = new FileStream("battery.csv", FileMode.Append))
+                    {
+                        var voltage = new byte[8];
+                        current = startIndex;
+
+                        for (int i = 0; i < voltage.Length; i++)
+                        {
+                            voltage[i] = data[current++];
+                        }
+                        var actualVoltage = BitConverter.ToDouble(voltage, 0);
+                        var percent = ((data[current++] << 8) + data[current]);
+
+                        var currentLine = startMillis + "," + actualVoltage + "," + percent + "\n";
+                        logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
+                    }
+                    Console.WriteLine(" finished.");
+                    break;
+                case PacketType.HeaterUpdate:
+                    Console.Write("Heater Packet found... Size: " + data.Length + ". Processing...");
+                    using (var logFile = new FileStream("heater.csv", FileMode.Append))
+                    {
+                        
+                        current = startIndex;
+
+                        var temp = ((data[current++] << 8) + data[current++]);
+                        var heaterTemp = ((data[current++] << 8) + data[current]);
+                        
+                        var currentLine = startMillis + "," + temp + "," + heaterTemp + "\n";
+                        logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
+                    }
+                    Console.WriteLine(" finished.");
+                    break;
+                case PacketType.LuminosityUpdate:
+                    Console.Write("Luminosity Packet found... Size: " + data.Length + ". Processing...");
+                    using (var logFile = new FileStream("luminosity.csv", FileMode.Append))
+                    {
+                        var luminosity = new byte[4];
+                        current = startIndex;
+
+                        for (int i = 0; i < luminosity.Length; i++) {
+                            luminosity[i] = data[current++];
+                        }
+                        var actualLuminosity = BitConverter.ToUInt32(luminosity, 0);
+
+                        var currentLine = startMillis + "," + actualLuminosity + "\n";
+                        logFile.Write(Encoding.UTF8.GetBytes(currentLine), 0, currentLine.Length);
+                    }
+                    Console.WriteLine(" finished.");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(packetType), packetType, null);
             }
         }
     }
-
- 
 }
